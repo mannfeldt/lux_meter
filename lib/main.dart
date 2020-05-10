@@ -18,6 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -39,8 +40,10 @@ class _LuxMeterState extends State<LuxMeter> {
   Light _light = new Light();
   StreamSubscription lightStream;
   bool showAvg = false;
-  double maxX = 30.0;
+  List<double> maxXs = [5.0, 10.0, 20.0, 30.0, 50.0, 75.0, 100.0];
+  int maxXIndex = 2;
   double maxY = 10.0;
+  double get maxX => maxXs[maxXIndex];
   List<Color> gradientColors = [
     Colors.blue.shade800,
     Colors.red.shade200,
@@ -74,7 +77,7 @@ class _LuxMeterState extends State<LuxMeter> {
       setState(() {
         lux.add(luxValue);
         if (lux.length > maxX + 1) {
-          lux.removeAt(0);
+          lux = lux.sublist(lux.length - maxX.toInt() - 1);
         }
       });
     }
@@ -97,40 +100,53 @@ class _LuxMeterState extends State<LuxMeter> {
             Colors.white.withOpacity(colorFilter), BlendMode.overlay),
         child: Scaffold(
           backgroundColor: Color(0xff232d37),
-          body: Center(
-            child: Stack(
-              children: <Widget>[
-                AspectRatio(
-                  aspectRatio: MediaQuery.of(context).size.width /
-                      MediaQuery.of(context).size.height,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(18),
+          body: GestureDetector(
+            onDoubleTap: () {
+              setState(() {
+                if (maxXIndex >= maxXs.length - 1) {
+                  maxXIndex = 0;
+                } else {
+                  maxXIndex = maxXIndex + 1;
+                }
+              });
+            },
+            child: Center(
+              child: Stack(
+                children: <Widget>[
+                  AspectRatio(
+                    aspectRatio: MediaQuery.of(context).size.width /
+                        MediaQuery.of(context).size.height,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(18),
+                          ),
+                          color: Color(0xff232d37)),
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                            right: 30.0, left: 0.0, top: 30, bottom: 10),
+                        child: LineChart(
+                          mainData(),
+                          swapAnimationDuration: Duration(milliseconds: 800),
                         ),
-                        color: Color(0xff232d37)),
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          right: 30.0, left: 0.0, top: 30, bottom: 10),
-                      child: LineChart(
-                        mainData(),
-                        swapAnimationDuration: Duration(milliseconds: 800),
                       ),
                     ),
                   ),
-                ),
-                Positioned.fill(
-                  top: 2,
-                  child: Container(
-                    child: Text(
-                      "$mostRecentLux lux",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: Colors.white, fontSize: 18, letterSpacing: 2),
+                  Positioned.fill(
+                    top: 2,
+                    child: Container(
+                      child: Text(
+                        "$mostRecentLux lux",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            letterSpacing: 2),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
