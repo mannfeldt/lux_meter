@@ -45,11 +45,16 @@ class _LuxMeterState extends State<LuxMeter> {
     Colors.blue.shade800,
     Colors.red.shade200,
   ];
+  int sunlight = 25000;
 
   double get maxLux =>
       lux.fold<double>(0, (max, lux) => lux > max ? lux.toDouble() : max);
   double get minLux =>
       lux.fold<double>(100000, (min, lux) => lux < min ? lux.toDouble() : min);
+
+  int get mostRecentLux => lux[lux.length - 1];
+  double get colorFilter =>
+      mostRecentLux > sunlight ? 1 : mostRecentLux / sunlight;
 
   @override
   void initState() {
@@ -87,42 +92,46 @@ class _LuxMeterState extends State<LuxMeter> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Scaffold(
-        backgroundColor: Color(0xff232d37),
-        body: Center(
-          child: Stack(
-            children: <Widget>[
-              AspectRatio(
-                aspectRatio: MediaQuery.of(context).size.width /
-                    MediaQuery.of(context).size.height,
-                child: Container(
-                  decoration: const BoxDecoration(
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(18),
+      child: ColorFiltered(
+        colorFilter: ColorFilter.mode(
+            Colors.white.withOpacity(colorFilter), BlendMode.overlay),
+        child: Scaffold(
+          backgroundColor: Color(0xff232d37),
+          body: Center(
+            child: Stack(
+              children: <Widget>[
+                AspectRatio(
+                  aspectRatio: MediaQuery.of(context).size.width /
+                      MediaQuery.of(context).size.height,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(18),
+                        ),
+                        color: Color(0xff232d37)),
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          right: 30.0, left: 0.0, top: 30, bottom: 10),
+                      child: LineChart(
+                        mainData(),
+                        swapAnimationDuration: Duration(milliseconds: 800),
                       ),
-                      color: Color(0xff232d37)),
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                        right: 30.0, left: 0.0, top: 30, bottom: 10),
-                    child: LineChart(
-                      mainData(),
-                      swapAnimationDuration: Duration(milliseconds: 800),
                     ),
                   ),
                 ),
-              ),
-              Positioned.fill(
-                top: 2,
-                child: Container(
-                  child: Text(
-                    "${lux[lux.length - 1]} lux",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: Colors.white, fontSize: 18, letterSpacing: 2),
+                Positioned.fill(
+                  top: 2,
+                  child: Container(
+                    child: Text(
+                      "$mostRecentLux lux",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: Colors.white, fontSize: 18, letterSpacing: 2),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
